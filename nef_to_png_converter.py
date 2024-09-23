@@ -1,13 +1,23 @@
 import os
 import glob
-import subprocess
 from tqdm import tqdm
+import rawpy
+import imageio
 
-NEF2PNG_PATH = "/home/runner/workspace/NEF2PNG/NEF2PNG.py"
+def convert_nef_to_png(input_file, output_file):
+    try:
+        with rawpy.imread(input_file) as raw:
+            rgb = raw.postprocess()
+        imageio.imsave(output_file, rgb)
+        print(f"Successfully converted {input_file} to {output_file}")
+        return True
+    except Exception as e:
+        print(f"Error converting {input_file}: {str(e)}")
+        return False
 
-def convert_nef_to_png(input_dir, output_dir):
+def convert_nef_files(input_dir, output_dir):
     """
-    Convert NEF files to PNG format using NEF2PNG.
+    Convert NEF files to PNG format using rawpy and imageio.
     """
     nef_files = glob.glob(os.path.join(input_dir, "*.NEF"))
     
@@ -17,22 +27,8 @@ def convert_nef_to_png(input_dir, output_dir):
         base_name = os.path.basename(nef_file)
         png_file = os.path.join(output_dir, os.path.splitext(base_name)[0] + ".png")
         
-        command = ["python", NEF2PNG_PATH, nef_file, png_file]
-        print(f"Running command: {' '.join(command)}")
-        
-        try:
-            result = subprocess.run(command, check=True, capture_output=True, text=True)
-            print(f"Command output:\n{result.stdout}")
-        except subprocess.CalledProcessError as e:
-            print(f"Error converting {nef_file}:")
-            print(f"Command: {e.cmd}")
-            print(f"Return code: {e.returncode}")
-            print(f"stdout: {e.stdout}")
-            print(f"stderr: {e.stderr}")
+        if not convert_nef_to_png(nef_file, png_file):
             all_conversions_successful = False
-        except FileNotFoundError:
-            print(f"Error: NEF2PNG tool not found at {NEF2PNG_PATH}. Please make sure it's installed correctly.")
-            return False
     
     return all_conversions_successful
 
@@ -80,7 +76,7 @@ def main():
         print(f"Created output directory: {output_dir}")
     
     # Step 1: Convert NEF to PNG
-    conversion_successful = convert_nef_to_png(input_dir, output_dir)
+    conversion_successful = convert_nef_files(input_dir, output_dir)
     if not conversion_successful:
         print("Conversion process failed. Exiting.")
         return

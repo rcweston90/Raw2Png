@@ -8,6 +8,8 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.11"
 tqdm = "^4.66.5"
+rawpy = "^0.23.1"
+imageio = "^2.35.1"
 
 
 [build-system]
