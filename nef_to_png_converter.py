@@ -3,7 +3,7 @@ import glob
 import subprocess
 from tqdm import tqdm
 
-NEF2PNG_PATH = "/home/runner/workspace/NEF2PNG/nef2png.py"
+NEF2PNG_PATH = "/home/runner/workspace/NEF2PNG/NEF2PNG.py"
 
 def convert_nef_to_png(input_dir, output_dir):
     """
