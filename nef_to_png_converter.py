@@ -3,6 +3,7 @@ import glob
 from tqdm import tqdm
 import rawpy
 import imageio
+import subprocess
 
 def convert_nef_to_png(input_file, output_file):
     try:
@@ -47,6 +48,9 @@ def compress_png_files(input_dir):
         try:
             result = subprocess.run(command, check=True, capture_output=True, text=True)
             print(f"Command output:\n{result.stdout}")
+        except FileNotFoundError:
+            print("Error: Caesium Image Compressor not found. Please make sure it's installed and in your PATH.")
+            return False
         except subprocess.CalledProcessError as e:
             print(f"Error compressing {png_file}:")
             print(f"Command: {e.cmd}")
@@ -54,9 +58,6 @@ def compress_png_files(input_dir):
             print(f"stdout: {e.stdout}")
             print(f"stderr: {e.stderr}")
             all_compressions_successful = False
-        except FileNotFoundError:
-            print("Error: Caesium Image Compressor not found. Please make sure it's installed and in your PATH.")
-            return False
     
     return all_compressions_successful
 
