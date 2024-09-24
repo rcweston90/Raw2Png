@@ -88,3 +88,5 @@ args = "python nef_to_png_converter.py --preserve-exif"
 
 [deployment]
 run = ["sh", "-c", "python nef_to_png_converter.py"]
+deploymentTarget = "gce"
+ignorePorts = true
