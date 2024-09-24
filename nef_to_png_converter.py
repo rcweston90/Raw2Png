@@ -6,9 +6,10 @@ import imageio
 import subprocess
 from multiprocessing import Pool, cpu_count
 
-def convert_raw_to_png(input_file):
+def convert_raw_to_png(args):
+    input_file, output_dir = args
     try:
-        output_file = os.path.join(os.path.dirname(input_file), os.path.splitext(os.path.basename(input_file))[0] + ".png")
+        output_file = os.path.join(output_dir, os.path.splitext(os.path.basename(input_file))[0] + ".png")
         with rawpy.imread(input_file) as raw:
             rgb = raw.postprocess()
         imageio.imsave(output_file, rgb)
@@ -32,19 +33,20 @@ def convert_raw_files(input_dir, output_dir):
     # Use multiprocessing to parallelize the conversion process
     num_processes = cpu_count()
     with Pool(processes=num_processes) as pool:
-        results = list(tqdm(pool.imap(convert_raw_to_png, raw_files), total=len(raw_files), desc="Converting"))
+        args = [(file, output_dir) for file in raw_files]
+        results = list(tqdm(pool.imap(convert_raw_to_png, args), total=len(raw_files), desc="Converting"))
 
     all_conversions_successful = all(results)
     return all_conversions_successful
 
-def compress_png_files(input_dir):
-    png_files = glob.glob(os.path.join(input_dir, "*.png"))
+def compress_png_files(output_dir):
+    png_files = glob.glob(os.path.join(output_dir, "*.png"))
     target_size = 5 * 1024 * 1024  # 5 MB in bytes
 
     print(f"Compressing {len(png_files)} PNG files...")
     all_compressions_successful = True
     for png_file in tqdm(png_files, desc="Compressing"):
-        output_file = png_file.replace('.png', '_compressed.png')
+        output_file = os.path.join(output_dir, os.path.splitext(os.path.basename(png_file))[0] + '_compressed.png')
         quality = 50
         resize_factor = 0.4
         original_size = os.path.getsize(png_file) / 1024 / 1024
@@ -115,7 +117,7 @@ def main():
     print("========================================")
 
     input_dir = input("Enter the directory containing RAW files (NEF, CR2, ARW): ").strip()
-    output_dir = input("Enter the output directory for compressed files: ").strip()
+    output_dir = input("Enter the custom output directory for compressed files: ").strip()
 
     if not os.path.exists(input_dir):
         print(f"Error: Input directory '{input_dir}' does not exist.")
@@ -123,7 +125,7 @@ def main():
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-        print(f"Created output directory: {output_dir}")
+        print(f"Created custom output directory: {output_dir}")
 
     # Step 1: Convert RAW to PNG
     conversion_successful = convert_raw_files(input_dir, output_dir)
