@@ -22,11 +22,17 @@ def convert_raw_files(input_dir, output_dir):
                 glob.glob(os.path.join(input_dir, "*.ARW"))
 
     print(f"Converting {len(raw_files)} RAW files to PNG...")
+    print("File types found:")
+    print(f"NEF files: {len(glob.glob(os.path.join(input_dir, '*.NEF')))}")
+    print(f"CR2 files: {len(glob.glob(os.path.join(input_dir, '*.CR2')))}")
+    print(f"ARW files: {len(glob.glob(os.path.join(input_dir, '*.ARW')))}")
+
     all_conversions_successful = True
     for raw_file in tqdm(raw_files, desc="Converting"):
         base_name = os.path.basename(raw_file)
         png_file = os.path.join(output_dir, os.path.splitext(base_name)[0] + ".png")
-
+        
+        print(f"Converting {raw_file} (type: {os.path.splitext(base_name)[1]})")
         if not convert_raw_to_png(raw_file, png_file):
             all_conversions_successful = False
 
