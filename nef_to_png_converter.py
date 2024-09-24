@@ -38,24 +38,36 @@ def compress_png_files(input_dir):
     all_compressions_successful = True
     for png_file in tqdm(png_files, desc="Compressing"):
         output_file = png_file.replace('.png', '_compressed.png')
-        quality = 80
-        resize_factor = 1.0
+        quality = 95
+        resize_factor = 0.8
+        original_size = os.path.getsize(png_file) / 1024 / 1024
+
+        print(f"\nCompressing {png_file}")
+        print(f"Original size: {original_size:.2f} MB")
 
         while True:
-            command = ["convert", png_file, "-quality", str(quality), "-resize", f"{resize_factor*100}%", output_file]
+            command = [
+                "convert", png_file,
+                "-quality", str(quality),
+                "-resize", f"{resize_factor*100}%",
+                "-define", "png:compression-level=9",
+                output_file
+            ]
             try:
                 subprocess.run(command, check=True, capture_output=True, text=True)
+                current_size = os.path.getsize(output_file) / 1024 / 1024
+                print(f"Quality: {quality}, Resize: {resize_factor*100:.1f}%, Size: {current_size:.2f} MB")
                 
-                if os.path.getsize(output_file) <= target_size:
-                    print(f"Successfully compressed {png_file} to {os.path.getsize(output_file) / 1024 / 1024:.2f} MB")
+                if current_size <= target_size:
+                    print(f"Successfully compressed to {current_size:.2f} MB")
                     break
                 
-                if quality > 20:
-                    quality -= 10
-                elif resize_factor > 0.5:
+                if quality > 30:
+                    quality -= 15
+                elif resize_factor > 0.3:
                     resize_factor -= 0.1
                 else:
-                    print(f"Warning: Could not compress {png_file} to under 5 MB. Final size: {os.path.getsize(output_file) / 1024 / 1024:.2f} MB")
+                    print(f"Warning: Could not compress to under 5 MB. Final size: {current_size:.2f} MB")
                     break
             except FileNotFoundError:
                 print("Error: ImageMagick not found. Please make sure it's installed and in your PATH.")
