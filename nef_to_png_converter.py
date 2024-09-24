@@ -38,8 +38,8 @@ def compress_png_files(input_dir):
     all_compressions_successful = True
     for png_file in tqdm(png_files, desc="Compressing"):
         output_file = png_file.replace('.png', '_compressed.png')
-        quality = 80
-        resize_factor = 0.7
+        quality = 60
+        resize_factor = 0.5
         original_size = os.path.getsize(png_file) / 1024 / 1024
 
         print(f"\nCompressing {png_file}")
@@ -51,6 +51,7 @@ def compress_png_files(input_dir):
                 "-quality", str(quality),
                 "-resize", f"{resize_factor*100}%",
                 "-define", "png:compression-level=9",
+                "-strip",  # Remove metadata
                 output_file
             ]
             try:
@@ -62,17 +63,22 @@ def compress_png_files(input_dir):
                     print(f"Successfully compressed to {current_size:.2f} MB")
                     break
                 
-                if quality > 20:
-                    quality -= 20
-                elif resize_factor > 0.2:
+                if quality > 40:
+                    quality -= 10
+                elif quality > 20:
+                    quality -= 5
+                elif resize_factor > 0.3:
                     resize_factor -= 0.1
+                elif resize_factor > 0.2:
+                    resize_factor -= 0.05
                 else:
                     # Try JPEG conversion as a last resort
                     jpeg_output = output_file.replace('.png', '.jpg')
                     jpeg_command = [
                         "convert", png_file,
-                        "-quality", "50",
-                        "-resize", "50%",
+                        "-quality", "40",
+                        "-resize", "40%",
+                        "-strip",
                         jpeg_output
                     ]
                     subprocess.run(jpeg_command, check=True, capture_output=True, text=True)
