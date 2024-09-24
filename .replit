@@ -23,6 +23,14 @@ args = "Run RAW to PNG Converter"
 task = "workflow.run"
 args = "Run Updated NEF to PNG Converter"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Run NEF to PNG Converter (No EXIF)"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Run NEF to PNG Converter (Preserve EXIF)"
+
 [[workflows.workflow]]
 name = "Run NEF to PNG Converter"
 author = "agent"
@@ -55,6 +63,28 @@ agentRequireRestartOnSave = false
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python nef_to_png_converter.py"
+
+[[workflows.workflow]]
+name = "Run NEF to PNG Converter (No EXIF)"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python nef_to_png_converter.py"
+
+[[workflows.workflow]]
+name = "Run NEF to PNG Converter (Preserve EXIF)"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python nef_to_png_converter.py --preserve-exif"
 
 [deployment]
 run = ["sh", "-c", "python nef_to_png_converter.py"]

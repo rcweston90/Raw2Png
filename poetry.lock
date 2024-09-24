@@ -12,6 +12,20 @@ files = [
 ]
 
 [[package]]
+name = "exif"
+version = "1.6.0"
+description = "Read and modify image EXIF metadata using Python."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "exif-1.6.0-py3-none-any.whl", hash = "sha256:2d002b5740eb897da43de1e6a8f4ebacf5171b4d0b8bc0182c70aebde1be86d3"},
+    {file = "exif-1.6.0.tar.gz", hash = "sha256:36288d1ffc60030084a04c26f50cc32e19383a36cd234fcfa1fb1c6f698e1d36"},
+]
+
+[package.dependencies]
+plum-py = ">=0.5.0,<2.0.0"
+
+[[package]]
 name = "imageio"
 version = "2.35.1"
 description = "Library for reading and writing a wide range of image, video, scientific, and volumetric data formats."
@@ -204,6 +218,17 @@ typing = ["typing-extensions"]
 xmp = ["defusedxml"]
 
 [[package]]
+name = "plum-py"
+version = "0.8.7"
+description = "Pack/Unpack Memory."
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "plum-py-0.8.7.tar.gz", hash = "sha256:40a25a70f7fd213f57cdd1decc65874df2d213d19d63478a1addcca748c13c4e"},
+    {file = "plum_py-0.8.7-py3-none-any.whl", hash = "sha256:d791f059ef159adbe3c3b036557b5b431fa07db226a9de106a74e5e57441741d"},
+]
+
+[[package]]
 name = "rawpy"
 version = "0.23.1"
 description = "RAW image processing for Python, a wrapper for libraw"
@@ -258,4 +283,4 @@ telegram = ["requests"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "1995fa42a01e9ef98a175fcf8d5a699daccdb87905bd7c9b30d8de7caf66965e"
+content-hash = "9b141b3468dce3ac9bf68c832397673513dbb8141afc741d777e8fa991a911f2"

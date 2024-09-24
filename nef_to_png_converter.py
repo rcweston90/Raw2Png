@@ -5,21 +5,42 @@ import rawpy
 import imageio
 import subprocess
 from multiprocessing import Pool, cpu_count
+import argparse
+from PIL import Image
+from PIL.ExifTags import TAGS
+from exif import Image as ExifImage
 
 def convert_raw_to_png(args):
-    input_file, output_dir = args
+    input_file, output_dir, preserve_exif = args
     try:
         output_file = os.path.join(output_dir, os.path.splitext(os.path.basename(input_file))[0] + ".png")
         with rawpy.imread(input_file) as raw:
             rgb = raw.postprocess()
         imageio.imsave(output_file, rgb)
+        
+        if preserve_exif:
+            # Copy EXIF data from RAW to PNG
+            with open(input_file, 'rb') as raw_file:
+                raw_image = ExifImage(raw_file)
+            
+            png_image = Image.open(output_file)
+            exif_data = png_image.getexif()
+            
+            for tag_id in raw_image.list_all():
+                tag = TAGS.get(tag_id, tag_id)
+                data = raw_image.get(tag_id)
+                if data is not None:
+                    exif_data[tag_id] = data
+            
+            png_image.save(output_file, exif=exif_data)
+        
         print(f"Successfully converted {input_file} to {output_file}")
         return True
     except Exception as e:
         print(f"Error converting {input_file}: {str(e)}")
         return False
 
-def convert_raw_files(input_dir, output_dir):
+def convert_raw_files(input_dir, output_dir, preserve_exif):
     raw_files = glob.glob(os.path.join(input_dir, "*.NEF")) + \
                 glob.glob(os.path.join(input_dir, "*.CR2")) + \
                 glob.glob(os.path.join(input_dir, "*.ARW"))
@@ -33,13 +54,13 @@ def convert_raw_files(input_dir, output_dir):
     # Use multiprocessing to parallelize the conversion process
     num_processes = cpu_count()
     with Pool(processes=num_processes) as pool:
-        args = [(file, output_dir) for file in raw_files]
+        args = [(file, output_dir, preserve_exif) for file in raw_files]
         results = list(tqdm(pool.imap(convert_raw_to_png, args), total=len(raw_files), desc="Converting"))
 
     all_conversions_successful = all(results)
     return all_conversions_successful
 
-def compress_png_files(output_dir):
+def compress_png_files(output_dir, preserve_exif):
     png_files = glob.glob(os.path.join(output_dir, "*.png"))
     target_size = 5 * 1024 * 1024  # 5 MB in bytes
 
@@ -60,9 +81,13 @@ def compress_png_files(output_dir):
                 "-quality", str(quality),
                 "-resize", f"{resize_factor*100}%",
                 "-define", "png:compression-level=9",
-                "-strip",  # Remove metadata
-                output_file
             ]
+            
+            if not preserve_exif:
+                command.append("-strip")  # Remove metadata only if not preserving EXIF
+            
+            command.append(output_file)
+            
             try:
                 subprocess.run(command, check=True, capture_output=True, text=True)
                 current_size = os.path.getsize(output_file) / 1024 / 1024
@@ -88,9 +113,11 @@ def compress_png_files(output_dir):
                             "convert", png_file,
                             "-quality", str(jpeg_quality),
                             "-resize", "50%",
-                            "-strip",
-                            jpeg_output
                         ]
+                        if not preserve_exif:
+                            jpeg_command.append("-strip")
+                        jpeg_command.append(jpeg_output)
+                        
                         subprocess.run(jpeg_command, check=True, capture_output=True, text=True)
                         jpeg_size = os.path.getsize(jpeg_output) / 1024 / 1024
                         if jpeg_size <= target_size:
@@ -113,6 +140,10 @@ def compress_png_files(output_dir):
     return all_compressions_successful
 
 def main():
+    parser = argparse.ArgumentParser(description="RAW to Web-Compatible PNG/JPEG Converter")
+    parser.add_argument("--preserve-exif", action="store_true", help="Preserve EXIF data during conversion and compression")
+    args = parser.parse_args()
+
     print("RAW to Web-Compatible PNG/JPEG Converter")
     print("========================================")
 
@@ -128,13 +159,13 @@ def main():
         print(f"Created custom output directory: {output_dir}")
 
     # Step 1: Convert RAW to PNG
-    conversion_successful = convert_raw_files(input_dir, output_dir)
+    conversion_successful = convert_raw_files(input_dir, output_dir, args.preserve_exif)
     if not conversion_successful:
         print("Conversion process failed. Exiting.")
         return
 
     # Step 2: Compress PNG files
-    compression_successful = compress_png_files(output_dir)
+    compression_successful = compress_png_files(output_dir, args.preserve_exif)
     if not compression_successful:
         print("Compression process failed. Exiting.")
         return
