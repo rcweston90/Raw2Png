@@ -5,7 +5,7 @@ import rawpy
 import imageio
 import subprocess
 
-def convert_nef_to_png(input_file, output_file):
+def convert_raw_to_png(input_file, output_file):
     try:
         with rawpy.imread(input_file) as raw:
             rgb = raw.postprocess()
@@ -16,16 +16,18 @@ def convert_nef_to_png(input_file, output_file):
         print(f"Error converting {input_file}: {str(e)}")
         return False
 
-def convert_nef_files(input_dir, output_dir):
-    nef_files = glob.glob(os.path.join(input_dir, "*.NEF"))
+def convert_raw_files(input_dir, output_dir):
+    raw_files = glob.glob(os.path.join(input_dir, "*.NEF")) + \
+                glob.glob(os.path.join(input_dir, "*.CR2")) + \
+                glob.glob(os.path.join(input_dir, "*.ARW"))
 
-    print(f"Converting {len(nef_files)} NEF files to PNG...")
+    print(f"Converting {len(raw_files)} RAW files to PNG...")
     all_conversions_successful = True
-    for nef_file in tqdm(nef_files, desc="Converting"):
-        base_name = os.path.basename(nef_file)
+    for raw_file in tqdm(raw_files, desc="Converting"):
+        base_name = os.path.basename(raw_file)
         png_file = os.path.join(output_dir, os.path.splitext(base_name)[0] + ".png")
 
-        if not convert_nef_to_png(nef_file, png_file):
+        if not convert_raw_to_png(raw_file, png_file):
             all_conversions_successful = False
 
     return all_conversions_successful
@@ -104,10 +106,10 @@ def compress_png_files(input_dir):
     return all_compressions_successful
 
 def main():
-    print("NEF to Web-Compatible PNG/JPEG Converter")
+    print("RAW to Web-Compatible PNG/JPEG Converter")
     print("========================================")
 
-    input_dir = input("Enter the directory containing NEF files: ").strip()
+    input_dir = input("Enter the directory containing RAW files (NEF, CR2, ARW): ").strip()
     output_dir = input("Enter the output directory for compressed files: ").strip()
 
     if not os.path.exists(input_dir):
@@ -118,8 +120,8 @@ def main():
         os.makedirs(output_dir)
         print(f"Created output directory: {output_dir}")
 
-    # Step 1: Convert NEF to PNG
-    conversion_successful = convert_nef_files(input_dir, output_dir)
+    # Step 1: Convert RAW to PNG
+    conversion_successful = convert_raw_files(input_dir, output_dir)
     if not conversion_successful:
         print("Conversion process failed. Exiting.")
         return

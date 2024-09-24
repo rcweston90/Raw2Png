@@ -15,8 +15,23 @@ author = "agent"
 task = "workflow.run"
 args = "Run NEF to PNG Converter"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Run RAW to PNG Converter"
+
 [[workflows.workflow]]
 name = "Run NEF to PNG Converter"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python nef_to_png_converter.py"
+
+[[workflows.workflow]]
+name = "Run RAW to PNG Converter"
 author = "agent"
 
 [workflows.workflow.metadata]
