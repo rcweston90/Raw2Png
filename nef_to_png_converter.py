@@ -38,8 +38,8 @@ def compress_png_files(input_dir):
     all_compressions_successful = True
     for png_file in tqdm(png_files, desc="Compressing"):
         output_file = png_file.replace('.png', '_compressed.png')
-        quality = 60
-        resize_factor = 0.5
+        quality = 50
+        resize_factor = 0.4
         original_size = os.path.getsize(png_file) / 1024 / 1024
 
         print(f"\nCompressing {png_file}")
@@ -63,35 +63,36 @@ def compress_png_files(input_dir):
                     print(f"Successfully compressed to {current_size:.2f} MB")
                     break
                 
-                if quality > 40:
+                if quality > 30:
                     quality -= 10
                 elif quality > 20:
                     quality -= 5
                 elif resize_factor > 0.3:
-                    resize_factor -= 0.1
-                elif resize_factor > 0.2:
                     resize_factor -= 0.05
+                elif resize_factor > 0.2:
+                    resize_factor -= 0.02
                 else:
-                    # Try JPEG conversion as a last resort
+                    # Try JPEG conversion with higher quality first
                     jpeg_output = output_file.replace('.png', '.jpg')
-                    jpeg_command = [
-                        "convert", png_file,
-                        "-quality", "40",
-                        "-resize", "40%",
-                        "-strip",
-                        jpeg_output
-                    ]
-                    subprocess.run(jpeg_command, check=True, capture_output=True, text=True)
-                    jpeg_size = os.path.getsize(jpeg_output) / 1024 / 1024
-                    if jpeg_size <= target_size:
-                        print(f"Converted to JPEG. Final size: {jpeg_size:.2f} MB")
-                        os.remove(output_file)  # Remove the PNG file
-                        output_file = jpeg_output  # Update the output file name
-                        break
+                    for jpeg_quality in [80, 60, 40]:
+                        jpeg_command = [
+                            "convert", png_file,
+                            "-quality", str(jpeg_quality),
+                            "-resize", "50%",
+                            "-strip",
+                            jpeg_output
+                        ]
+                        subprocess.run(jpeg_command, check=True, capture_output=True, text=True)
+                        jpeg_size = os.path.getsize(jpeg_output) / 1024 / 1024
+                        if jpeg_size <= target_size:
+                            print(f"Converted to JPEG. Final size: {jpeg_size:.2f} MB")
+                            os.remove(output_file)  # Remove the PNG file
+                            output_file = jpeg_output  # Update the output file name
+                            break
                     else:
                         os.remove(jpeg_output)  # Remove the JPEG file if it's still too large
                         print(f"Warning: Could not compress to under 5 MB. Final size: {current_size:.2f} MB")
-                        break
+                    break
             except FileNotFoundError:
                 print("Error: ImageMagick not found. Please make sure it's installed and in your PATH.")
                 return False
