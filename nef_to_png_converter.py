@@ -4,9 +4,11 @@ from tqdm import tqdm
 import rawpy
 import imageio
 import subprocess
+from multiprocessing import Pool, cpu_count
 
-def convert_raw_to_png(input_file, output_file):
+def convert_raw_to_png(input_file):
     try:
+        output_file = os.path.join(os.path.dirname(input_file), os.path.splitext(os.path.basename(input_file))[0] + ".png")
         with rawpy.imread(input_file) as raw:
             rgb = raw.postprocess()
         imageio.imsave(output_file, rgb)
@@ -27,15 +29,12 @@ def convert_raw_files(input_dir, output_dir):
     print(f"CR2 files: {len(glob.glob(os.path.join(input_dir, '*.CR2')))}")
     print(f"ARW files: {len(glob.glob(os.path.join(input_dir, '*.ARW')))}")
 
-    all_conversions_successful = True
-    for raw_file in tqdm(raw_files, desc="Converting"):
-        base_name = os.path.basename(raw_file)
-        png_file = os.path.join(output_dir, os.path.splitext(base_name)[0] + ".png")
-        
-        print(f"Converting {raw_file} (type: {os.path.splitext(base_name)[1]})")
-        if not convert_raw_to_png(raw_file, png_file):
-            all_conversions_successful = False
+    # Use multiprocessing to parallelize the conversion process
+    num_processes = cpu_count()
+    with Pool(processes=num_processes) as pool:
+        results = list(tqdm(pool.imap(convert_raw_to_png, raw_files), total=len(raw_files), desc="Converting"))
 
+    all_conversions_successful = all(results)
     return all_conversions_successful
 
 def compress_png_files(input_dir):
