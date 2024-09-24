@@ -32,23 +32,38 @@ def convert_nef_files(input_dir, output_dir):
 
 def compress_png_files(input_dir):
     png_files = glob.glob(os.path.join(input_dir, "*.png"))
+    target_size = 5 * 1024 * 1024  # 5 MB in bytes
 
     print(f"Compressing {len(png_files)} PNG files...")
     all_compressions_successful = True
     for png_file in tqdm(png_files, desc="Compressing"):
         output_file = png_file.replace('.png', '_compressed.png')
-        command = ["convert", png_file, "-quality", "80", output_file]
-        print(f"Running command: {' '.join(command)}")
+        quality = 80
+        resize_factor = 1.0
 
-        try:
-            result = subprocess.run(command, check=True, capture_output=True, text=True)
-            print(f"Successfully compressed {png_file}")
-        except FileNotFoundError:
-            print("Error: ImageMagick not found. Please make sure it's installed and in your PATH.")
-            return False
-        except subprocess.CalledProcessError as e:
-            print(f"Error compressing {png_file}: {e}")
-            all_compressions_successful = False
+        while True:
+            command = ["convert", png_file, "-quality", str(quality), "-resize", f"{resize_factor*100}%", output_file]
+            try:
+                subprocess.run(command, check=True, capture_output=True, text=True)
+                
+                if os.path.getsize(output_file) <= target_size:
+                    print(f"Successfully compressed {png_file} to {os.path.getsize(output_file) / 1024 / 1024:.2f} MB")
+                    break
+                
+                if quality > 20:
+                    quality -= 10
+                elif resize_factor > 0.5:
+                    resize_factor -= 0.1
+                else:
+                    print(f"Warning: Could not compress {png_file} to under 5 MB. Final size: {os.path.getsize(output_file) / 1024 / 1024:.2f} MB")
+                    break
+            except FileNotFoundError:
+                print("Error: ImageMagick not found. Please make sure it's installed and in your PATH.")
+                return False
+            except subprocess.CalledProcessError as e:
+                print(f"Error compressing {png_file}: {e}")
+                all_compressions_successful = False
+                break
 
     return all_compressions_successful
 
